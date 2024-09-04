@@ -39,7 +39,7 @@ import java.util.function.Predicate;
  * @since 0.2.0
  * @see <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a>
  */
-public class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<T> implements InitializingBean {
+public non-sealed class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<T> implements InitializingBean {
 
     private Converter<T, byte[]> rowMapper;
     private ObjectWriter objectWriter;

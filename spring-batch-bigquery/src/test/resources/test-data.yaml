@@ -16,3 +16,9 @@ projects:
                 age: 27
               - name: Oleksandra
                 age: 26
+          - id: json-writer-pre-created
+            columns:
+              - name: name
+                type: STRING
+              - name: age
+                type: INTEGER

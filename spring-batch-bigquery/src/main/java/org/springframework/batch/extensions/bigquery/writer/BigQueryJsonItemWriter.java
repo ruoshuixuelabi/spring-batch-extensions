@@ -39,7 +39,7 @@ import java.util.function.Predicate;
  * @since 0.2.0
  * @see <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>
  */
-public class BigQueryJsonItemWriter<T> extends BigQueryBaseItemWriter<T> implements InitializingBean {
+public non-sealed class BigQueryJsonItemWriter<T> extends BigQueryBaseItemWriter<T> implements InitializingBean {
 
     private Converter<T, byte[]> rowMapper;
     private ObjectWriter objectWriter;

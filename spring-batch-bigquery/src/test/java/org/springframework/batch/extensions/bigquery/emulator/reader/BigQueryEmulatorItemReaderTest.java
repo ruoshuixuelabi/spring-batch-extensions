@@ -5,10 +5,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
 import org.springframework.batch.extensions.bigquery.common.TestConstants;
+import org.springframework.batch.extensions.bigquery.emulator.BaseEmulatorTest;
 import org.springframework.batch.extensions.bigquery.reader.BigQueryQueryItemReader;
 import org.springframework.batch.extensions.bigquery.reader.builder.BigQueryQueryItemReaderBuilder;
 
-class BigQueryEmulatorItemReaderTest extends BaseEmulatorItemReaderTest {
+class BigQueryEmulatorItemReaderTest extends BaseEmulatorTest {
 
     @Test
     void testBatchReader() throws Exception {
