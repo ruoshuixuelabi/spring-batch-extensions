@@ -85,27 +85,23 @@ public non-sealed class BigQueryJsonItemWriter<T> extends BigQueryBaseItemWriter
     }
 
     @Override
-    public void afterPropertiesSet() {
-        super.baseAfterPropertiesSet(() -> {
-            Table table = getTable();
+    protected void performFormatSpecificChecks() {
+        Table table = getTable();
 
-            if (Boolean.TRUE.equals(writeChannelConfig.getAutodetect())) {
-                if (tableHasDefinedSchema(table) && super.logger.isWarnEnabled()) {
-                    logger.warn("Mixing autodetect mode with already defined schema may lead to errors on BigQuery side");
-                }
-            } else {
-                Assert.notNull(writeChannelConfig.getSchema(), "Schema must be provided");
-
-                if (tableHasDefinedSchema(table)) {
-                    Assert.isTrue(
-                            Objects.equals(table.getDefinition().getSchema(), writeChannelConfig.getSchema()),
-                            "Schema should be the same"
-                    );
-                }
+        if (Boolean.TRUE.equals(writeChannelConfig.getAutodetect())) {
+            if (tableHasDefinedSchema(table) && super.logger.isWarnEnabled()) {
+                logger.warn("Mixing autodetect mode with already defined schema may lead to errors on BigQuery side");
             }
+        } else {
+            Assert.notNull(writeChannelConfig.getSchema(), "Schema must be provided");
 
-            return null;
-        });
+            if (tableHasDefinedSchema(table)) {
+                Assert.isTrue(
+                        Objects.equals(table.getDefinition().getSchema(), writeChannelConfig.getSchema()),
+                        "Schema should be the same"
+                );
+            }
+        }
     }
 
     private byte[] mapItemToJson(T t) {

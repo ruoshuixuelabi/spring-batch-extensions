@@ -1,4 +1,4 @@
-package org.springframework.batch.extensions.bigquery.emulator;
+package org.springframework.batch.extensions.bigquery.emulator.base;
 
 import com.google.cloud.NoCredentials;
 import com.google.cloud.bigquery.BigQuery;
@@ -11,10 +11,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 
 @Testcontainers
-public abstract class BaseEmulatorTest {
+public abstract class AbstractEmulatorTest {
     private static final int PORT = 9050;
 
-    private static final String PROJECT = "batch-test";
+    protected static final String PROJECT = "batch-test";
 
     @Container
     private static final GenericContainer<?> CONTAINER = new FixedHostPortGenericContainer<>("ghcr.io/goccy/bigquery-emulator")

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.extensions.bigquery.unit.reader.builder;
+package org.springframework.batch.extensions.bigquery.example.reader.builder;
 
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.QueryJobConfiguration;
@@ -23,11 +23,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
 import org.springframework.batch.extensions.bigquery.common.TestConstants;
-import org.springframework.batch.extensions.bigquery.unit.base.AbstractBigQueryTest;
+import org.springframework.batch.extensions.bigquery.example.base.AbstractExampleTest;
 import org.springframework.batch.extensions.bigquery.reader.BigQueryQueryItemReader;
 import org.springframework.batch.extensions.bigquery.reader.builder.BigQueryQueryItemReaderBuilder;
 
-class BigQueryInteractiveQueryItemReaderBuilderTests extends AbstractBigQueryTest {
+class BigQueryInteractiveQueryItemReaderBuilderTests extends AbstractExampleTest {
 
     @Test
     void testSimpleQueryItemReader() {
@@ -35,7 +35,7 @@ class BigQueryInteractiveQueryItemReaderBuilderTests extends AbstractBigQueryTes
 
         BigQueryQueryItemReader<PersonDto> reader = new BigQueryQueryItemReaderBuilder<PersonDto>()
                 .bigQuery(mockedBigQuery)
-                .query("SELECT p.name, p.age FROM spring_batch_extensions.persons p LIMIT 1")
+                .query(TestConstants.QUERY)
                 .rowMapper(TestConstants.PERSON_MAPPER)
                 .build();
 
@@ -49,7 +49,7 @@ class BigQueryInteractiveQueryItemReaderBuilderTests extends AbstractBigQueryTes
         BigQuery mockedBigQuery = prepareMockedBigQuery();
 
         QueryJobConfiguration jobConfiguration = QueryJobConfiguration
-                .newBuilder("SELECT p.name, p.age FROM spring_batch_extensions.persons p LIMIT 2")
+                .newBuilder(TestConstants.QUERY)
                 .setDestinationTable(TableId.of(TestConstants.DATASET, "persons_duplicate"))
                 .build();
 

@@ -16,11 +16,19 @@
 
 package org.springframework.batch.extensions.bigquery.gcloud.writer;
 
-import com.google.cloud.bigquery.*;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.FormatOptions;
+import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.StandardTableDefinition;
+import com.google.cloud.bigquery.TableDefinition;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.bigquery.WriteChannelConfiguration;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.batch.extensions.bigquery.common.BigQueryDataLoader;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
 import org.springframework.batch.extensions.bigquery.common.TestConstants;
 import org.springframework.batch.extensions.bigquery.writer.BigQueryJsonItemWriter;
@@ -30,26 +38,29 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class BigQueryGcloudJsonItemWriterTest extends BaseBigQueryGcloudItemWriterTest {
 
-    @BeforeAll
-    static void prepareTest() {
+    @BeforeEach
+    void prepare(TestInfo testInfo) {
         if (BIG_QUERY.getDataset(TestConstants.DATASET) == null) {
             BIG_QUERY.create(DatasetInfo.of(TestConstants.DATASET));
         }
 
-        if (BIG_QUERY.getTable(TestConstants.DATASET, TestConstants.JSON) == null) {
+        String tableName = testInfo.getTags().iterator().next();
+
+        if (BIG_QUERY.getTable(TestConstants.DATASET, tableName) == null) {
             TableDefinition tableDefinition = StandardTableDefinition.of(PersonDto.getBigQuerySchema());
-            BIG_QUERY.create(TableInfo.of(TableId.of(TestConstants.DATASET, TestConstants.JSON), tableDefinition));
+            BIG_QUERY.create(TableInfo.of(TableId.of(TestConstants.DATASET, tableName), tableDefinition));
         }
     }
 
-    @AfterAll
-    static void cleanup() {
-        BIG_QUERY.delete(TableId.of(TestConstants.DATASET, TestConstants.JSON));
+    @AfterEach
+    void cleanup(TestInfo testInfo) {
+        BIG_QUERY.delete(TableId.of(TestConstants.DATASET, testInfo.getTags().iterator().next()));
     }
 
     @Test
-    void testWriteJson() throws Exception {
-        AtomicReference<Job> job = new AtomicReference<>();
+    @Tag(TestConstants.JSON + "1")
+    void testWriteJson(TestInfo testInfo) throws Exception {
+        String tableName = testInfo.getTags().iterator().next();
 
         WriteChannelConfiguration channelConfiguration = WriteChannelConfiguration
                 .newBuilder(TableId.of(TestConstants.DATASET, TestConstants.JSON))
@@ -58,6 +69,26 @@ class BigQueryGcloudJsonItemWriterTest extends BaseBigQueryGcloudItemWriterTest 
                 .setFormatOptions(FormatOptions.json())
                 .build();
 
+        performTest(channelConfiguration, tableName);
+    }
+
+    @Test
+    @Tag(TestConstants.JSON + "2")
+    void testWriteJsonWithAutodetection(TestInfo testInfo) throws Exception {
+        String tableName = testInfo.getTags().iterator().next();
+
+        WriteChannelConfiguration channelConfiguration = WriteChannelConfiguration
+                .newBuilder(TableId.of(TestConstants.DATASET, TestConstants.JSON))
+                .setAutodetect(true)
+                .setFormatOptions(FormatOptions.json())
+                .build();
+
+        performTest(channelConfiguration, tableName);
+    }
+
+    private void performTest(WriteChannelConfiguration channelConfiguration, String tableName) throws Exception {
+        AtomicReference<Job> job = new AtomicReference<>();
+
         BigQueryJsonItemWriter<PersonDto> writer = new BigQueryJsonItemWriterBuilder<PersonDto>()
                 .bigQuery(BIG_QUERY)
                 .writeChannelConfig(channelConfiguration)
@@ -65,10 +96,10 @@ class BigQueryGcloudJsonItemWriterTest extends BaseBigQueryGcloudItemWriterTest 
                 .build();
 
         writer.afterPropertiesSet();
-        writer.write(BigQueryDataLoader.CHUNK);
+        writer.write(TestConstants.CHUNK);
         job.get().waitFor();
 
-        verifyResults(TestConstants.JSON);
+        verifyResults(tableName);
     }
 
 }

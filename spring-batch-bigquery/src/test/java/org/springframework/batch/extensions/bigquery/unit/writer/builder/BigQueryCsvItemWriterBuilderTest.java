@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.extensions.bigquery.unit.base;
+package org.springframework.batch.extensions.bigquery.unit.writer.builder;
 
-import com.google.cloud.bigquery.BigQuery;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.extensions.bigquery.unit.base.AbstractBigQueryTest;
+import org.springframework.batch.extensions.bigquery.writer.builder.BigQueryCsvItemWriterBuilder;
 
-// TODO remove?
-public abstract class AbstractBigQueryTest {
+class BigQueryCsvItemWriterBuilderTest extends AbstractBigQueryTest {
 
-    protected BigQuery prepareMockedBigQuery() {
-        BigQuery mockedBigQuery = Mockito.mock(BigQuery.class);
-
-        Mockito
-                .when(mockedBigQuery.getTable(Mockito.any()))
-                .thenReturn(null);
-
-        Mockito
-                .when(mockedBigQuery.getDataset(Mockito.anyString()))
-                .thenReturn(null);
-
-        return mockedBigQuery;
+    @Test
+    void testBuild() {
+        Assertions.assertNotNull(new BigQueryCsvItemWriterBuilder<>().build());
     }
 
 }

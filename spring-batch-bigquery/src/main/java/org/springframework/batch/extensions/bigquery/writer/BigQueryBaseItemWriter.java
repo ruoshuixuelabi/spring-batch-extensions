@@ -16,21 +16,12 @@
 
 package org.springframework.batch.extensions.bigquery.writer;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Dataset;
-import com.google.cloud.bigquery.DatasetInfo;
-import com.google.cloud.bigquery.FormatOptions;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableDataWriteChannel;
-import com.google.cloud.bigquery.TableDefinition;
-import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.WriteChannelConfiguration;
-import org.apache.commons.lang3.BooleanUtils;
+import com.google.cloud.bigquery.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -41,7 +32,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Base class that holds shared code for JSON and CSV writers.
@@ -50,7 +40,9 @@ import java.util.function.Supplier;
  * @author Volodymyr Perebykivskyi
  * @since 0.1.0
  */
-public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> permits BigQueryCsvItemWriter, BigQueryJsonItemWriter {
+public abstract sealed class BigQueryBaseItemWriter<T>
+        implements ItemWriter<T>, InitializingBean
+        permits BigQueryCsvItemWriter, BigQueryJsonItemWriter {
 
     /** Logger that can be reused */
     protected final Log logger = LogFactory.getLog(getClass());
@@ -75,6 +67,8 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
     private Consumer<Job> jobConsumer;
 
     private BigQuery bigQuery;
+
+    private boolean writeFailed;
 
     /**
      * Fetches table from the provided configuration.
@@ -155,7 +149,7 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
         return byteBuffer;
     }
 
-    private void doWriteDataToBigQuery(ByteBuffer byteBuffer) throws IOException {
+    private void doWriteDataToBigQuery(ByteBuffer byteBuffer) {
         if (this.logger.isDebugEnabled()) {
             this.logger.debug("Writing data to BigQuery");
         }
@@ -168,21 +162,24 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
             writeChannel = writer;
         }
         catch (Exception e) {
-            logger.error("Error", e);
+            writeFailed = true;
+            logger.error("BigQuery error", e);
+            throw new BigQueryItemWriterException("Error on write happened", e);
         }
         finally {
-            // TODO execute code below only when no exception happened
-            String logMessage = "Write operation submitted: " + bigQueryWriteCounter.incrementAndGet();
+            if (!writeFailed) {
+                String logMessage = "Write operation submitted: " + bigQueryWriteCounter.incrementAndGet();
 
-            if (writeChannel != null) {
-                logMessage += " -- Job ID: " + writeChannel.getJob().getJobId().getJob();
-                if (this.jobConsumer != null) {
-                    this.jobConsumer.accept(writeChannel.getJob());
+                if (writeChannel != null) {
+                    logMessage += " -- Job ID: " + writeChannel.getJob().getJobId().getJob();
+                    if (this.jobConsumer != null) {
+                        this.jobConsumer.accept(writeChannel.getJob());
+                    }
                 }
-            }
 
-            if (this.logger.isDebugEnabled()) {
-                this.logger.debug(logMessage);
+                if (this.logger.isDebugEnabled()) {
+                    this.logger.debug(logMessage);
+                }
             }
         }
     }
@@ -197,21 +194,21 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
 
     /**
      * Performs common validation for CSV and JSON types.
-     *
-     * @param formatSpecificChecks supplies type-specific validation
      */
-    protected void baseAfterPropertiesSet(Supplier<Void> formatSpecificChecks) {
+    @Override
+    public void afterPropertiesSet() {
         Assert.notNull(this.bigQuery, "BigQuery service must be provided");
         Assert.notNull(this.writeChannelConfig, "Write channel configuration must be provided");
 
-        Assert.isTrue(BooleanUtils.isFalse(isBigtable()), "Google BigTable is not supported");
-        Assert.isTrue(BooleanUtils.isFalse(isGoogleSheets()), "Google Sheets is not supported");
-        Assert.isTrue(BooleanUtils.isFalse(isDatastore()), "Google Datastore is not supported");
-        Assert.isTrue(BooleanUtils.isFalse(isParquet()), "Parquet is not supported");
-        Assert.isTrue(BooleanUtils.isFalse(isOrc()), "Orc is not supported");
-        Assert.isTrue(BooleanUtils.isFalse(isAvro()), "Avro is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isBigtable()), "Google BigTable is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isGoogleSheets()), "Google Sheets is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isDatastore()), "Google Datastore is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isParquet()), "Parquet is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isOrc()), "Orc is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isAvro()), "Avro is not supported");
+        Assert.isTrue(Boolean.FALSE.equals(isIceberg()), "Apache Iceberg is not supported");
 
-        formatSpecificChecks.get();
+        performFormatSpecificChecks();
 
         Assert.notNull(this.writeChannelConfig.getFormat(), "Data format must be provided");
 
@@ -265,6 +262,10 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
         return FormatOptions.datastoreBackup().getType().equals(this.writeChannelConfig.getFormat());
     }
 
+    private boolean isIceberg() {
+        return FormatOptions.iceberg().getType().equals(this.writeChannelConfig.getFormat());
+    }
+
     /**
      * Schema can be computed on the BigQuery side during upload,
      * so it is good to know when schema is supplied by user manually.
@@ -296,5 +297,10 @@ public abstract sealed class BigQueryBaseItemWriter<T> implements ItemWriter<T> 
      * @return {@link List<byte[]>} converted list of byte arrays
      */
     protected abstract List<byte[]> convertObjectsToByteArrays(List<? extends T> items);
+
+    /**
+     * Performs specific checks that are unique to the format.
+     */
+    protected abstract void performFormatSpecificChecks();
 
 }

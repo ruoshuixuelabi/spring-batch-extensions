@@ -22,3 +22,9 @@ projects:
                 type: STRING
               - name: age
                 type: INTEGER
+          - id: csv-writer-pre-created
+            columns:
+              - name: name
+                type: STRING
+              - name: age
+                type: INTEGER

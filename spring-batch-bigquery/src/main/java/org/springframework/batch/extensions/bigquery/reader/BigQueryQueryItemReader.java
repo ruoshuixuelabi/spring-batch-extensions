@@ -64,7 +64,7 @@ public class BigQueryQueryItemReader<T> implements ItemReader<T>, InitializingBe
     }
 
     /**
-     * Row mapper which transforms single BigQuery row into desired type.
+     * Row mapper which transforms single BigQuery row into a desired type.
      *
      * @param rowMapper your row mapper
      */

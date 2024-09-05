@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.extensions.bigquery.unit.writer.builder;
+package org.springframework.batch.extensions.bigquery.example.writer.builder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +35,7 @@ import org.springframework.batch.extensions.bigquery.unit.base.AbstractBigQueryT
 import org.springframework.batch.extensions.bigquery.writer.BigQueryJsonItemWriter;
 import org.springframework.batch.extensions.bigquery.writer.builder.BigQueryJsonItemWriterBuilder;
 
+// TODO
 class BigQueryJsonItemWriterBuilderTests extends AbstractBigQueryTest {
 
     private static final String TABLE = "persons_json";

@@ -14,26 +14,10 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.extensions.bigquery.unit.base;
-
-import com.google.cloud.bigquery.BigQuery;
-import org.mockito.Mockito;
-
-// TODO remove?
-public abstract class AbstractBigQueryTest {
-
-    protected BigQuery prepareMockedBigQuery() {
-        BigQuery mockedBigQuery = Mockito.mock(BigQuery.class);
-
-        Mockito
-                .when(mockedBigQuery.getTable(Mockito.any()))
-                .thenReturn(null);
-
-        Mockito
-                .when(mockedBigQuery.getDataset(Mockito.anyString()))
-                .thenReturn(null);
-
-        return mockedBigQuery;
-    }
-
-}
+/**
+ * These tests are run against BigQuery emulator. It is the next test level after unit tests.
+ * An attempt to cover integration with fake BigQuery.
+ *
+ * @see <a href="https://github.com/goccy/bigquery-emulator">GitHub</a>
+ */
+package org.springframework.batch.extensions.bigquery.emulator;

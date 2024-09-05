@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.google.cloud.bigquery.Table;
 import org.apache.commons.lang3.ArrayUtils;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
@@ -39,7 +38,7 @@ import java.util.function.Predicate;
  * @since 0.2.0
  * @see <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a>
  */
-public non-sealed class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<T> implements InitializingBean {
+public non-sealed class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<T> {
 
     private Converter<T, byte[]> rowMapper;
     private ObjectWriter objectWriter;
@@ -74,7 +73,6 @@ public non-sealed class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<
         this.rowMapper = rowMapper;
     }
 
-
     @Override
     protected List<byte[]> convertObjectsToByteArrays(List<? extends T> items) {
         return items
@@ -88,27 +86,23 @@ public non-sealed class BigQueryCsvItemWriter<T> extends BigQueryBaseItemWriter<
     }
 
     @Override
-    public void afterPropertiesSet() {
-        super.baseAfterPropertiesSet(() -> {
-            Table table = getTable();
+    protected void performFormatSpecificChecks() {
+        Table table = getTable();
 
-            if (Boolean.TRUE.equals(super.writeChannelConfig.getAutodetect())) {
-                if (tableHasDefinedSchema(table) && super.logger.isWarnEnabled()) {
-                    logger.warn("Mixing autodetect mode with already defined schema may lead to errors on BigQuery side");
-                }
-            } else {
-                Assert.notNull(super.writeChannelConfig.getSchema(), "Schema must be provided");
-
-                if (tableHasDefinedSchema(table)) {
-                    Assert.isTrue(
-                            Objects.equals(table.getDefinition().getSchema(), super.writeChannelConfig.getSchema()),
-                            "Schema should be the same"
-                    );
-                }
+        if (Boolean.TRUE.equals(super.writeChannelConfig.getAutodetect())) {
+            if (tableHasDefinedSchema(table) && super.logger.isWarnEnabled()) {
+                logger.warn("Mixing autodetect mode with already defined schema may lead to errors on BigQuery side");
             }
+        } else {
+            Assert.notNull(super.writeChannelConfig.getSchema(), "Schema must be provided");
 
-            return null;
-        });
+            if (tableHasDefinedSchema(table)) {
+                Assert.isTrue(
+                        Objects.equals(table.getDefinition().getSchema(), super.writeChannelConfig.getSchema()),
+                        "Schema must be the same"
+                );
+            }
+        }
     }
 
     private byte[] mapItemToCsv(T t) {

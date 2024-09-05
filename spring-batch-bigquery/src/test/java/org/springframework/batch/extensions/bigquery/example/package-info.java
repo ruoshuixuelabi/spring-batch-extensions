@@ -14,26 +14,8 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.extensions.bigquery.unit.base;
-
-import com.google.cloud.bigquery.BigQuery;
-import org.mockito.Mockito;
-
-// TODO remove?
-public abstract class AbstractBigQueryTest {
-
-    protected BigQuery prepareMockedBigQuery() {
-        BigQuery mockedBigQuery = Mockito.mock(BigQuery.class);
-
-        Mockito
-                .when(mockedBigQuery.getTable(Mockito.any()))
-                .thenReturn(null);
-
-        Mockito
-                .when(mockedBigQuery.getDataset(Mockito.anyString()))
-                .thenReturn(null);
-
-        return mockedBigQuery;
-    }
-
-}
+/**
+ * These tests are not usual tests, they are just examples how you can use
+ * {@link org.springframework.batch.extensions.bigquery.reader.builder.BigQueryQueryItemReaderBuilder}.
+ */
+package org.springframework.batch.extensions.bigquery.example;

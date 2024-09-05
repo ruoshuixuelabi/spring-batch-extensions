@@ -18,14 +18,13 @@ package org.springframework.batch.extensions.bigquery.gcloud.writer;
 
 import com.google.cloud.bigquery.*;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.batch.extensions.bigquery.common.BigQueryDataLoader;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
 import org.springframework.batch.extensions.bigquery.common.TestConstants;
 import org.springframework.batch.extensions.bigquery.gcloud.base.BaseBigQueryGcloudIntegrationTest;
 
 abstract class BaseBigQueryGcloudItemWriterTest extends BaseBigQueryGcloudIntegrationTest {
 
-    protected void verifyResults(String tableName) {
+    void verifyResults(String tableName) {
         Dataset dataset = BIG_QUERY.getDataset(TestConstants.DATASET);
         Table table = BIG_QUERY.getTable(TableId.of(TestConstants.DATASET, tableName));
         TableId tableId = table.getTableId();
@@ -33,16 +32,16 @@ abstract class BaseBigQueryGcloudItemWriterTest extends BaseBigQueryGcloudIntegr
 
         Assertions.assertNotNull(dataset.getDatasetId());
         Assertions.assertNotNull(tableId);
-        Assertions.assertEquals(BigQueryDataLoader.CHUNK.size(), tableResult.getTotalRows());
+        Assertions.assertEquals(TestConstants.CHUNK.size(), tableResult.getTotalRows());
 
         tableResult
                 .getValues()
                 .forEach(field -> {
                     Assertions.assertTrue(
-                            BigQueryDataLoader.CHUNK.getItems().stream().map(PersonDto::name).anyMatch(name -> field.get(0).getStringValue().equals(name))
+                            TestConstants.CHUNK.getItems().stream().map(PersonDto::name).anyMatch(name -> field.get(0).getStringValue().equals(name))
                     );
 
-                    boolean ageCondition = BigQueryDataLoader.CHUNK
+                    boolean ageCondition = TestConstants.CHUNK
                             .getItems()
                             .stream()
                             .map(PersonDto::age)

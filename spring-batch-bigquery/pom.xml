@@ -75,6 +75,7 @@
             <version>2.17.2</version>
         </dependency>
 
+        <!-- TODO remove? -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

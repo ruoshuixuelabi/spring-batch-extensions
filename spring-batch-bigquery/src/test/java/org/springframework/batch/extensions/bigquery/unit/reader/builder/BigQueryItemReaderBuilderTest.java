@@ -16,9 +16,6 @@
 
 package org.springframework.batch.extensions.bigquery.unit.reader.builder;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.TableId;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
@@ -27,27 +24,23 @@ import org.springframework.batch.extensions.bigquery.reader.BigQueryQueryItemRea
 import org.springframework.batch.extensions.bigquery.reader.builder.BigQueryQueryItemReaderBuilder;
 import org.springframework.batch.extensions.bigquery.unit.base.AbstractBigQueryTest;
 
-// TODO verify all corner cases of afterPropertiesSet
-class BigQueryBatchQueryItemReaderBuilderTests extends AbstractBigQueryTest {
+class BigQueryItemReaderBuilderTest extends AbstractBigQueryTest {
 
     @Test
-    void testCustomQueryItemReader() {
-        BigQuery mockedBigQuery = prepareMockedBigQuery();
+    void testBuild_WithoutJobConfiguration_WithoutQuery() {
+        IllegalArgumentException ex = Assertions.assertThrowsExactly(
+                IllegalArgumentException.class,
+                () -> new BigQueryQueryItemReaderBuilder<PersonDto>().build()
+        );
 
-        QueryJobConfiguration jobConfiguration = QueryJobConfiguration
-                .newBuilder("SELECT p.name, p.age FROM spring_batch_extensions.persons p LIMIT 2")
-                .setDestinationTable(TableId.of(TestConstants.DATASET, "persons_duplicate"))
-                .setPriority(QueryJobConfiguration.Priority.BATCH)
-                .build();
+        Assertions.assertEquals(TestConstants.NO_QUERY_PROVIDED, ex.getMessage());
+    }
 
+    @Test
+    void testBuild_WithoutJobConfiguration_WithQuery() {
         BigQueryQueryItemReader<PersonDto> reader = new BigQueryQueryItemReaderBuilder<PersonDto>()
-                .bigQuery(mockedBigQuery)
-                .jobConfiguration(jobConfiguration)
-                .rowMapper(TestConstants.PERSON_MAPPER)
+                .query("SELECT p.name, p.age FROM spring_batch_extensions.persons p LIMIT 2")
                 .build();
-
-        reader.afterPropertiesSet();
-
         Assertions.assertNotNull(reader);
     }
 

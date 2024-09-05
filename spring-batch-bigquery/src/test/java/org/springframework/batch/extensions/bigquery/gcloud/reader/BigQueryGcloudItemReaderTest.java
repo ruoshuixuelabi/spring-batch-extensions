@@ -18,12 +18,15 @@ package org.springframework.batch.extensions.bigquery.gcloud.reader;
 
 import com.google.cloud.bigquery.*;
 import org.junit.jupiter.api.*;
-import org.springframework.batch.extensions.bigquery.common.BigQueryDataLoader;
 import org.springframework.batch.extensions.bigquery.common.PersonDto;
 import org.springframework.batch.extensions.bigquery.common.TestConstants;
 import org.springframework.batch.extensions.bigquery.gcloud.base.BaseBigQueryGcloudIntegrationTest;
 import org.springframework.batch.extensions.bigquery.reader.BigQueryQueryItemReader;
 import org.springframework.batch.extensions.bigquery.reader.builder.BigQueryQueryItemReaderBuilder;
+import org.springframework.batch.extensions.bigquery.writer.BigQueryCsvItemWriter;
+import org.springframework.batch.extensions.bigquery.writer.builder.BigQueryCsvItemWriterBuilder;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 class BigQueryGcloudItemReaderTest extends BaseBigQueryGcloudIntegrationTest {
 
@@ -38,7 +41,7 @@ class BigQueryGcloudItemReaderTest extends BaseBigQueryGcloudIntegrationTest {
             BIG_QUERY.create(TableInfo.of(TableId.of(TestConstants.DATASET, TestConstants.CSV), tableDefinition));
         }
 
-        new BigQueryDataLoader(BIG_QUERY).loadCsvSample(TestConstants.CSV);
+        loadCsvSample();
     }
 
     @AfterAll
@@ -80,10 +83,10 @@ class BigQueryGcloudItemReaderTest extends BaseBigQueryGcloudIntegrationTest {
 
     private void verifyResult(BigQueryQueryItemReader<PersonDto> reader) throws Exception {
         PersonDto actualFirstPerson = reader.read();
-        PersonDto expectedFirstPerson = BigQueryDataLoader.CHUNK.getItems().get(0);
+        PersonDto expectedFirstPerson = TestConstants.CHUNK.getItems().get(0);
 
         PersonDto actualSecondPerson = reader.read();
-        PersonDto expectedSecondPerson = BigQueryDataLoader.CHUNK.getItems().get(1);
+        PersonDto expectedSecondPerson = TestConstants.CHUNK.getItems().get(1);
 
         PersonDto actualThirdPerson = reader.read();
 
@@ -96,6 +99,27 @@ class BigQueryGcloudItemReaderTest extends BaseBigQueryGcloudIntegrationTest {
         Assertions.assertEquals(0, expectedSecondPerson.age().compareTo(actualSecondPerson.age()));
 
         Assertions.assertNull(actualThirdPerson);
+    }
+
+    private static void loadCsvSample() throws Exception {
+        AtomicReference<Job> job = new AtomicReference<>();
+
+        WriteChannelConfiguration channelConfiguration = WriteChannelConfiguration
+                .newBuilder(TableId.of(TestConstants.DATASET, TestConstants.CSV))
+                .setSchema(PersonDto.getBigQuerySchema())
+                .setAutodetect(false)
+                .setFormatOptions(FormatOptions.csv())
+                .build();
+
+        BigQueryCsvItemWriter<PersonDto> writer = new BigQueryCsvItemWriterBuilder<PersonDto>()
+                .bigQuery(BIG_QUERY)
+                .writeChannelConfig(channelConfiguration)
+                .jobConsumer(job::set)
+                .build();
+
+        writer.afterPropertiesSet();
+        writer.write(TestConstants.CHUNK);
+        job.get().waitFor();
     }
 
 }
